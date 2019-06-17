@@ -59,6 +59,12 @@ public struct ButtonBarPagerTabStripSettings {
         public var buttonBarItemsShouldFillAvailableWidth = true
         // only used if button bar is created programaticaly and not using storyboards or nib files
         public var buttonBarHeight: CGFloat?
+        
+        public var showSeparator: Bool = false
+        public var separatorColor: UIColor? = UIColor.white
+        public var separatorWidth: Float = 1.0
+        public var separatorInset: UIEdgeInsets = UIEdgeInsets(top: 10, left: 0, bottom: 10, right: 0)
+        public var hideBarWhenSingleTab: Bool = true
     }
 
     public var style = Style()
@@ -163,6 +169,9 @@ open class ButtonBarPagerTabStripViewController: PagerTabStripViewController, Pa
     open override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         buttonBarView.layoutIfNeeded()
+        if buttonBarView.numberOfItems(inSection: 0) <= 1 && settings.style.hideBarWhenSingleTab {
+            self.hideButtonBarView()
+        }
     }
 
     open override func viewDidLayoutSubviews() {
@@ -197,6 +206,23 @@ open class ButtonBarPagerTabStripViewController: PagerTabStripViewController, Pa
         buttonBarView.reloadData()
         cachedCellWidths = calculateWidths()
         buttonBarView.moveTo(index: currentIndex, animated: false, swipeDirection: .none, pagerScroll: .yes)
+    }
+    
+    open func customReloadPagerTabStripView(defaultIndex index:Int) {
+        if currentIndex < viewControllers.count - 1 {
+            super.reloadPagerTabStripView()
+            guard isViewLoaded else { return }
+            
+            buttonBarView.reloadData()
+            cachedCellWidths = calculateWidths()
+            if currentIndex > 0 {
+                buttonBarView.moveTo(index: currentIndex, animated: false, swipeDirection: .none, pagerScroll: .yes)
+            }
+        } else {
+            super.customReloadPagerTabStripView()
+            self.setupDefaultViewController(at: 1)
+            self.customReloadPagerTabStripView(defaultIndex: index)
+        }
     }
 
     open func calculateStretchedCellWidths(_ minimumCellWidths: [CGFloat], suggestedStretchedCellWidth: CGFloat, previousNumberOfLargeCells: Int) -> CGFloat {
@@ -266,9 +292,18 @@ open class ButtonBarPagerTabStripViewController: PagerTabStripViewController, Pa
 
         return cells
     }
+    
+    open func hideButtonBarView(){
+        let buttonBarViewHeight = self.buttonBarView.frame.size.height
+        buttonBarView.frame = CGRect(origin: buttonBarView.frame.origin, size: CGSize(width: 0.0, height: 0.0))
+        
+        var containerViewRect = self.containerView.frame
+        containerViewRect.origin = buttonBarView.frame.origin
+        containerViewRect.size.height = containerViewRect.size.height + buttonBarViewHeight
+        self.containerView.frame = containerViewRect
+    }
 
     // MARK: - UICollectionViewDelegateFlowLayut
-
     @objc open func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAtIndexPath indexPath: IndexPath) -> CGSize {
         guard let cellWidthValue = cachedCellWidths?[indexPath.row] else {
             fatalError("cachedCellWidths for \(indexPath.row) must not be nil")
@@ -341,6 +376,13 @@ open class ButtonBarPagerTabStripViewController: PagerTabStripViewController, Pa
         cell.isAccessibilityElement = true
         cell.accessibilityLabel = indicatorInfo.accessibilityLabel ?? cell.label.text
         cell.accessibilityTraits.insert([.button, .header])
+        
+        cell.separatorView.isHidden = indexPath.item == self.viewControllers.count - 1 ? true : !settings.style.showSeparator
+        if settings.style.showSeparator {
+            cell.separatorBottomConstraint.constant = settings.style.separatorInset.bottom
+            cell.separatorTopConstraint.constant = settings.style.separatorInset.top
+        }
+
         return cell
     }
 
