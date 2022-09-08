@@ -314,7 +314,7 @@ open class ButtonBarPagerTabStripViewController: PagerTabStripViewController, Pa
         
         var containerViewRect = self.containerView.frame
         containerViewRect.origin = buttonBarView.frame.origin
-        containerViewRect.size.height = containerViewRect.size.height + buttonBarViewHeight
+        containerViewRect.size.height += buttonBarViewHeight
         self.containerView.frame = containerViewRect
     }
 
