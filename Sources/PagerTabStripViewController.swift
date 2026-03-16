@@ -356,6 +356,10 @@ open class PagerTabStripViewController: UIViewController, UIScrollViewDelegate {
         }
     }
 
+    open func scrollViewDidEndDecelerating(_ scrollView: UIScrollView) {
+        // scrollViewDidEndDecelerating
+    }
+
     // MARK: - Orientation
 
     open override func viewWillTransition(to size: CGSize, with coordinator: UIViewControllerTransitionCoordinator) {
